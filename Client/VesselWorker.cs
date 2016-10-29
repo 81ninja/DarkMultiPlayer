@@ -1465,7 +1465,7 @@ namespace DarkMultiPlayer
             try
             {
                 DodgeVesselActionGroups(inputNode);
-                RemoveManeuverNodesFromProtoVessel(inputNode);
+                //RemoveManeuverNodesFromProtoVessel(inputNode);
                 DodgeVesselLandedStatus(inputNode);
                 KerbalReassigner.fetch.DodgeKerbals(inputNode, protovesselID);
                 pv = new ProtoVessel(inputNode, HighLogic.CurrentGame);
