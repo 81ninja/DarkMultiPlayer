@@ -217,6 +217,7 @@ namespace DarkMultiPlayer
             GameEvents.onVesselDestroy.Add(this.OnVesselDestroyed);
             GameEvents.onPartCouple.Add(this.OnVesselDock);
             GameEvents.onCrewBoardVessel.Add(this.OnCrewBoard);
+            GameEvents.onKerbalRemoved.Add(OnKerbalRemoved);
             GameEvents.onKerbalRemoved.Add(this.OnKerbalRemoved);
         }
 
@@ -228,6 +229,7 @@ namespace DarkMultiPlayer
             GameEvents.onVesselDestroy.Remove(this.OnVesselDestroyed);
             GameEvents.onPartCouple.Remove(this.OnVesselDock);
             GameEvents.onCrewBoardVessel.Remove(this.OnCrewBoard);
+            GameEvents.onKerbalRemoved.Remove(OnKerbalRemoved);
             GameEvents.onKerbalRemoved.Remove(this.OnKerbalRemoved);
         }
 
@@ -909,8 +911,6 @@ namespace DarkMultiPlayer
             if (!LockSystem.fetch.LockExists("update-" + checkVessel.id.ToString()))
             {
                 LockSystem.fetch.ThrottledAcquireLock("update-" + checkVessel.id.ToString());
-                //Wait until we have the update lock
-                return;
             }
 
             // Check if it isn't null before fetching it
@@ -935,7 +935,7 @@ namespace DarkMultiPlayer
             //Check that is hasn't been recently sent
             if (notRecentlySentProtoUpdate)
             {
-                ProtoVessel checkProto = new ProtoVessel(checkVessel);
+                ProtoVessel checkProto = checkVessel.BackupVessel();
                 //TODO: Fix sending of flying vessels.
                 if (checkProto != null)
                 {
@@ -981,10 +981,10 @@ namespace DarkMultiPlayer
         {
             ConfigNode kerbalNode = new ConfigNode();
             pcm.Save(kerbalNode);
-            if (pcm.type == ProtoCrewMember.KerbalType.Tourist || (pcm.type == ProtoCrewMember.KerbalType.Unowned && pcm.rosterStatus == ProtoCrewMember.RosterStatus.Assigned))
+            if (pcm.type == ProtoCrewMember.KerbalType.Tourist || pcm.type == ProtoCrewMember.KerbalType.Unowned)
             {
                 ConfigNode dmpNode = new ConfigNode();
-                dmpNode.AddValue("contractOwner", Settings.fetch.playerName);
+                dmpNode.AddValue("contractOwner", Settings.fetch.playerPublicKey);
                 kerbalNode.AddNode("DarkMultiPlayer", dmpNode);
             }
             byte[] kerbalBytes = ConfigNodeSerializer.fetch.Serialize(kerbalNode);
@@ -1010,6 +1010,15 @@ namespace DarkMultiPlayer
             {
                 serverKerbals[pcm.name] = kerbalHash;
                 NetworkWorker.fetch.SendKerbalProtoMessage(pcm.name, kerbalBytes);
+            }
+        }
+
+        public void SendKerbalRemove(string kerbalName)
+        {
+            if (serverKerbals.ContainsKey(kerbalName))
+            {
+                DarkLog.Debug("Found kerbal " + kerbalName + ", sending remove...");
+                NetworkWorker.fetch.SendKerbalRemove(kerbalName);
             }
         }
         //Also called from PlayerStatusWorker
@@ -1683,7 +1692,7 @@ namespace DarkMultiPlayer
             NetworkWorker.fetch.SendVesselRemove(dyingVesselID, false);
         }
 
-		//TODO: I don't know what this bool does?
+        //TODO: I don't know what this bool does?
         public void OnVesselRecovered(ProtoVessel recoveredVessel, bool something)
         {
             Guid recoveredVesselID = recoveredVessel.vesselID;
@@ -1738,11 +1747,6 @@ namespace DarkMultiPlayer
             SendKerbalsInVessel(terminatedVessel);
             serverVessels.Remove(terminatedVesselID);
             NetworkWorker.fetch.SendVesselRemove(terminatedVesselID, false);
-        }
-
-        public void OnKerbalRemoved(ProtoCrewMember removedKerbal)
-        {
-            NetworkWorker.fetch.SendKerbalRemoveMessage(removedKerbal.name);
         }
 
         public void SendKerbalsInVessel(ProtoVessel vessel)
@@ -1823,7 +1827,7 @@ namespace DarkMultiPlayer
                     bool fromVesselUpdateLockIsOurs = LockSystem.fetch.LockIsOurs("update-" + partAction.from.vessel.id.ToString());
                     bool toVesselUpdateLockIsOurs = LockSystem.fetch.LockIsOurs("update-" + partAction.to.vessel.id.ToString());
                     if (fromVesselUpdateLockIsOurs || toVesselUpdateLockIsOurs || !fromVesselUpdateLockExists || !toVesselUpdateLockExists)
-                    {
+                    {                    
                         DarkLog.Debug("Vessel docking, from: " + partAction.from.vessel.id + ", name: " + partAction.from.vessel.vesselName);
                         DarkLog.Debug("Vessel docking, to: " + partAction.to.vessel.id + ", name: " + partAction.to.vessel.vesselName);
                         if (FlightGlobals.fetch.activeVessel != null)
@@ -1864,6 +1868,11 @@ namespace DarkMultiPlayer
                 fromDockedVesselID = partAction.from.vessel.id;
                 toDockedVesselID = partAction.to.vessel.id;
             }
+        }
+
+        private void OnKerbalRemoved(ProtoCrewMember pcm)
+        {
+            SendKerbalRemove(pcm.name);
         }
 
         public void KillVessel(Vessel killVessel)
@@ -2316,3 +2325,4 @@ namespace DarkMultiPlayer
         public ConfigNode kerbalNode;
     }
 }
+

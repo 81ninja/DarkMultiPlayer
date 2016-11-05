@@ -794,11 +794,11 @@ namespace DarkMultiPlayer
                     case ServerMessageType.KERBAL_REPLY:
                         HandleKerbalReply(message.data);
                         break;
-                    case ServerMessageType.KERBAL_REMOVE:
-                        HandleKerbalRemoved(message.data);
-                        break;
                     case ServerMessageType.KERBAL_COMPLETE:
                         HandleKerbalComplete();
+                        break;
+                    case ServerMessageType.KERBAL_REMOVE:
+                        HandleKerbalRemove(message.data);
                         break;
                     case ServerMessageType.VESSEL_LIST:
                         HandleVesselList(message.data);
@@ -1214,11 +1214,11 @@ namespace DarkMultiPlayer
             Client.fetch.status = "Kerbals synced";
         }
 
-        private void HandleKerbalRemoved(byte[] messageData)
+        private void HandleKerbalRemove(byte[] messageData)
         {
             using (MessageReader mr = new MessageReader(messageData))
             {
-                mr.Read<double>();
+                double planetTime = mr.Read<double>();
                 string kerbalName = mr.Read<string>();
                 DarkLog.Debug("Kerbal removed: " + kerbalName);
                 ScreenMessages.PostScreenMessage("Kerbal " + kerbalName + " removed from game", 5f, ScreenMessageStyle.UPPER_CENTER);
@@ -1777,7 +1777,7 @@ namespace DarkMultiPlayer
                     return true;
                 }
             }
-
+            
             return false;
         }
 
@@ -1796,7 +1796,7 @@ namespace DarkMultiPlayer
             {
                 foreach (ProtoCrewMember pcm in pps.protoModuleCrew.ToArray())
                 {
-                    if (pcm.type == ProtoCrewMember.KerbalType.Tourist || pcm.type == ProtoCrewMember.KerbalType.Unowned)
+                    if (pcm.type == ProtoCrewMember.KerbalType.Tourist)
                     {
                         isContractVessel = true;
                     }
@@ -1910,6 +1910,20 @@ namespace DarkMultiPlayer
             }
             QueueOutgoingMessage(newMessage, false);
         }
+        // Called from VesselWorker
+        public void SendKerbalRemove(string kerbalName)
+        {
+            DarkLog.Debug("Removing kerbal " + kerbalName + " from the server");
+            ClientMessage newMessage = new ClientMessage();
+            newMessage.type = ClientMessageType.KERBAL_REMOVE;
+            using (MessageWriter mw = new MessageWriter())
+            {
+                mw.Write<double>(Planetarium.GetUniversalTime());
+                mw.Write<string>(kerbalName);
+                newMessage.data = mw.GetMessageBytes();
+            }
+            QueueOutgoingMessage(newMessage, false);
+        }
         //Called fro craftLibraryWorker
         public void SendCraftLibraryMessage(byte[] messageData)
         {
@@ -1981,20 +1995,6 @@ namespace DarkMultiPlayer
             {
                 DarkLog.Debug("Failed to create byte[] data for kerbal " + kerbalName);
             }
-        }
-
-        public void SendKerbalRemoveMessage(string kerbalName)
-        {
-            ClientMessage newMessage = new ClientMessage();
-            newMessage.type = ClientMessageType.KERBAL_REMOVE;
-            using (MessageWriter mw = new MessageWriter())
-            {
-                mw.Write<double>(Planetarium.GetUniversalTime());
-                mw.Write<string>(kerbalName);
-                newMessage.data = mw.GetMessageBytes();
-            }
-            DarkLog.Debug("Removing kerbal " + kerbalName + ", size: " + newMessage.data.Length);
-            QueueOutgoingMessage(newMessage, false);
         }
         //Called from chatWorker
         public void SendPingRequest()
@@ -2104,3 +2104,4 @@ namespace DarkMultiPlayer
         public int port;
     }
 }
+
