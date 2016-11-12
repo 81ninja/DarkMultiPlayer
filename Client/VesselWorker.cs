@@ -48,10 +48,10 @@ namespace DarkMultiPlayer
         private Dictionary<Guid, bool> vesselPartsOk = new Dictionary<Guid, bool>();
         //Vessel state tracking
         private Guid lastVesselID;
-        private Dictionary<Guid, int> vesselPartCount = new Dictionary<Guid, int>();
-        private Dictionary<Guid, string> vesselNames = new Dictionary<Guid, string>();
-        private Dictionary<Guid, VesselType> vesselTypes = new Dictionary<Guid, VesselType>();
-        private Dictionary<Guid, Vessel.Situations> vesselSituations = new Dictionary<Guid, Vessel.Situations>();
+        private Dictionary <Guid, int> vesselPartCount = new Dictionary<Guid, int>();
+        private Dictionary <Guid, string> vesselNames = new Dictionary<Guid, string>();
+        private Dictionary <Guid, VesselType> vesselTypes = new Dictionary<Guid, VesselType>();
+        private Dictionary <Guid, Vessel.Situations> vesselSituations = new Dictionary<Guid, Vessel.Situations>();
         //Known kerbals
         private Dictionary<string, string> serverKerbals = new Dictionary<string, string>();
         //Known vessels and last send/receive time
@@ -177,7 +177,7 @@ namespace DarkMultiPlayer
                         delayKillVessels.Remove(dyingVessel);
                     }
                 }
-
+                
                 if (fromDockedVesselID != Guid.Empty || toDockedVesselID != Guid.Empty)
                 {
                     HandleDocking();
@@ -218,7 +218,6 @@ namespace DarkMultiPlayer
             GameEvents.onPartCouple.Add(this.OnVesselDock);
             GameEvents.onCrewBoardVessel.Add(this.OnCrewBoard);
             GameEvents.onKerbalRemoved.Add(OnKerbalRemoved);
-            GameEvents.onKerbalRemoved.Add(this.OnKerbalRemoved);
         }
 
         private void UnregisterGameHooks()
@@ -230,7 +229,6 @@ namespace DarkMultiPlayer
             GameEvents.onPartCouple.Remove(this.OnVesselDock);
             GameEvents.onCrewBoardVessel.Remove(this.OnCrewBoard);
             GameEvents.onKerbalRemoved.Remove(OnKerbalRemoved);
-            GameEvents.onKerbalRemoved.Remove(this.OnKerbalRemoved);
         }
 
         private void HandleDocking()
@@ -1018,6 +1016,7 @@ namespace DarkMultiPlayer
             if (serverKerbals.ContainsKey(kerbalName))
             {
                 DarkLog.Debug("Found kerbal " + kerbalName + ", sending remove...");
+                serverKerbals.Remove(kerbalName);
                 NetworkWorker.fetch.SendKerbalRemove(kerbalName);
             }
         }
@@ -1146,7 +1145,7 @@ namespace DarkMultiPlayer
                 return;
             }
 
-            if (crewNode.GetValue("type") == "Tourist" || crewNode.GetValue("type") == "Unowned")
+            if (crewNode.GetValue("type") == "Tourist")
             {
                 ConfigNode dmpNode = null;
                 if (crewNode.TryGetNode("DarkMultiPlayer", ref dmpNode))
@@ -1156,7 +1155,7 @@ namespace DarkMultiPlayer
                     {
                         if (dmpOwner != Settings.fetch.playerPublicKey)
                         {
-                            DarkLog.Debug("Skipping load of kerbal that belongs to another player's contracts");
+                            DarkLog.Debug("Skipping load of tourist that belongs to another player");
                             return;
                         }
                     }
@@ -1474,7 +1473,6 @@ namespace DarkMultiPlayer
             try
             {
                 DodgeVesselActionGroups(inputNode);
-                //RemoveManeuverNodesFromProtoVessel(inputNode);
                 DodgeVesselLandedStatus(inputNode);
                 KerbalReassigner.fetch.DodgeKerbals(inputNode, protovesselID);
                 pv = new ProtoVessel(inputNode, HighLogic.CurrentGame);
@@ -1596,6 +1594,34 @@ namespace DarkMultiPlayer
                 if (flightPlanNode != null)
                 {
                     flightPlanNode.ClearData();
+                }
+            }
+        }
+
+        private void FixVesselManeuverNodes(ConfigNode vesselNode)
+        {
+            if (vesselNode != null)
+            {
+                ConfigNode flightPlanNode = vesselNode.GetNode("FLIGHTPLAN");
+                List<ConfigNode> expiredManeuverNodes = new List<ConfigNode>();
+                if (flightPlanNode != null)
+                {
+                    foreach (ConfigNode maneuverNode in flightPlanNode.GetNodes("MANEUVER"))
+                    {
+                        double maneuverUT = double.Parse(maneuverNode.GetValue("UT"));
+                        double currentTime = Planetarium.GetUniversalTime();
+                        if (currentTime > maneuverUT) expiredManeuverNodes.Add(maneuverNode);
+                    }
+
+                    if (expiredManeuverNodes.Count != 0)
+                    {
+                        foreach (ConfigNode removeNode in expiredManeuverNodes)
+                        {
+                            DarkLog.Debug("Removed maneuver node from vessel, it was expired!");
+                            flightPlanNode.RemoveNode(removeNode);
+                        }
+                    }
+                    
                 }
             }
         }
