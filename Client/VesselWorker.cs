@@ -1145,7 +1145,7 @@ namespace DarkMultiPlayer
                 return;
             }
 
-            if (crewNode.GetValue("type") == "Tourist")
+            if (crewNode.GetValue("type") == "Tourist" || crewNode.GetValue("type") == "Unowned")
             {
                 ConfigNode dmpNode = null;
                 if (crewNode.TryGetNode("DarkMultiPlayer", ref dmpNode))
@@ -1155,7 +1155,7 @@ namespace DarkMultiPlayer
                     {
                         if (dmpOwner != Settings.fetch.playerPublicKey)
                         {
-                            DarkLog.Debug("Skipping load of tourist that belongs to another player");
+                            DarkLog.Debug("Skipping load of kerbal that belongs to another player's contracts");
                             return;
                         }
                     }
@@ -1793,7 +1793,8 @@ namespace DarkMultiPlayer
                 }
                 foreach (ProtoCrewMember pcm in part.protoModuleCrew)
                 {
-                    SendKerbalIfDifferent(pcm);
+                    if (pcm.type != ProtoCrewMember.KerbalType.Tourist)
+                        SendKerbalIfDifferent(pcm);
                 }
             }
         }
@@ -1816,7 +1817,8 @@ namespace DarkMultiPlayer
                 }
                 foreach (ProtoCrewMember pcm in part.protoModuleCrew)
                 {
-                    SendKerbalIfDifferent(pcm);
+                    if (pcm.type != ProtoCrewMember.KerbalType.Tourist)
+                        SendKerbalIfDifferent(pcm);
                 }
             }
         }
