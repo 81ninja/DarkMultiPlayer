@@ -605,9 +605,6 @@ namespace DarkMultiPlayerServer
                     case ClientMessageType.KERBAL_PROTO:
                         Messages.KerbalProto.HandleKerbalProto(client, message.data);
                         break;
-                    case ClientMessageType.KERBAL_REMOVE:
-                        Messages.VesselRemove.HandleKerbalRemoval(client, message.data);
-                        break;
                     case ClientMessageType.VESSELS_REQUEST:
                         Messages.VesselRequest.HandleVesselsRequest(client, message.data);
                         break;

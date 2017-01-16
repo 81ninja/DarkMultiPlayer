@@ -278,6 +278,7 @@ namespace DarkMultiPlayerServer.Messages
                 newSubspace.planetTime = planetTime;
                 newSubspace.subspaceSpeed = subspaceSpeed;
                 subspaces.Add(freeID, newSubspace);
+                offlinePlayerSubspaces[client.playerName] = freeID;
                 //Create message
                 ServerMessage newMessage = new ServerMessage();
                 newMessage.type = ServerMessageType.WARP_CONTROL;
@@ -556,14 +557,18 @@ namespace DarkMultiPlayerServer.Messages
             int targetSubspace = -1;
             if (Settings.settingsStore.sendPlayerToLatestSubspace || !offlinePlayerSubspaces.ContainsKey(client.playerName))
             {
-                targetSubspace = GetLatestSubspace();
+                int latestSubspace = GetLatestSubspace();
+                long serverClock = DateTime.UtcNow.Ticks;
+                double planetTime = subspaces[latestSubspace].planetTime;
+                float subspaceSpeed = subspaces[latestSubspace].subspaceSpeed;
+                HandleNewSubspace(client, serverClock, planetTime, subspaceSpeed);
             }
             else
             {
-                DarkLog.Debug("Sending " + client.playerName + " to the previous subspace " + targetSubspace);
                 targetSubspace = offlinePlayerSubspaces[client.playerName];
+                DarkLog.Debug("Sending " + client.playerName + " to the previous subspace " + targetSubspace);
+                SendSetSubspace(client, targetSubspace);
             }
-            SendSetSubspace(client, targetSubspace);
         }
 
         public static void SendSetSubspace(ClientObject client, int subspace)
