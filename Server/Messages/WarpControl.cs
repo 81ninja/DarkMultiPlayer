@@ -660,6 +660,7 @@ namespace DarkMultiPlayerServer.Messages
                 double currentPlanetTime = subspace.Value.planetTime + (((currentTime - subspace.Value.serverClock) / 10000000) * subspace.Value.subspaceSpeed);
                 if (currentPlanetTime > latestPlanetTime)
                 {
+                    latestPlanetTime = currentPlanetTime;
                     latestID = subspace.Key;
                 }
             }
