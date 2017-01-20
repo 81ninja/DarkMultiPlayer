@@ -732,6 +732,7 @@ namespace DarkMultiPlayerCommon
         public long serverClock;
         public double planetTime;
         public float subspaceSpeed;
+        public string playerName;
     }
 
     public class PlayerWarpRate

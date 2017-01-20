@@ -9,7 +9,7 @@ namespace DarkMultiPlayerServer.Messages
     public class WarpControl
     {
         //SUBSPACE
-        private static int freeID;
+        private static int freeID = 0;
         private static Dictionary<int, Subspace> subspaces = new Dictionary<int, Subspace>();
         private static Dictionary<string, int> offlinePlayerSubspaces = new Dictionary<string, int>();
         private static object createLock = new object();
@@ -277,8 +277,12 @@ namespace DarkMultiPlayerServer.Messages
                 newSubspace.serverClock = serverClock;
                 newSubspace.planetTime = planetTime;
                 newSubspace.subspaceSpeed = subspaceSpeed;
+                newSubspace.playerName = client.playerName;
                 subspaces.Add(freeID, newSubspace);
                 offlinePlayerSubspaces[client.playerName] = freeID;
+                //Save to disk
+                SaveSubspace(freeID, newSubspace);
+
                 //Create message
                 ServerMessage newMessage = new ServerMessage();
                 newMessage.type = ServerMessageType.WARP_CONTROL;
@@ -289,6 +293,7 @@ namespace DarkMultiPlayerServer.Messages
                     mw.Write<long>(serverClock);
                     mw.Write<double>(planetTime);
                     mw.Write<float>(subspaceSpeed);
+                    //mw.Write<string>(client.playerName);
                     newMessage.data = mw.GetMessageBytes();
                 }
                 //Tell all clients about the new subspace
@@ -303,8 +308,6 @@ namespace DarkMultiPlayerServer.Messages
                     SendSetSubspace(client, freeID);
                 }
                 freeID++;
-                //Save to disk
-                SaveLatestSubspace();
             }
         }
 
@@ -367,7 +370,7 @@ namespace DarkMultiPlayerServer.Messages
                 }
                 ClientHandler.SendToAll(null, relockMessage, true);
                 //Save to disk
-                SaveLatestSubspace();
+                SaveSubspace(reportedSubspace, subspaces[reportedSubspace]);
             }
             //Tell other players about the reported rate
             ServerMessage reportMessage = new ServerMessage();
@@ -484,6 +487,7 @@ namespace DarkMultiPlayerServer.Messages
                     mw.Write<long>(subspace.Value.serverClock);
                     mw.Write<double>(subspace.Value.planetTime);
                     mw.Write<float>(subspace.Value.subspaceSpeed);
+                    //mw.Write<string>(subspace.Value.playerName);
                     newMessage.data = mw.GetMessageBytes();
                 }
                 ClientHandler.SendToClient(client, newMessage, true);
@@ -552,13 +556,13 @@ namespace DarkMultiPlayerServer.Messages
                     subspace.Value.serverClock = currentTime;
                     subspace.Value.subspaceSpeed = 1f;
                 }
-                SaveLatestSubspace();
+                SaveSubspace(client);
             }
             int targetSubspace = -1;
             if (Settings.settingsStore.sendPlayerToLatestSubspace || !offlinePlayerSubspaces.ContainsKey(client.playerName))
             {
                 int latestSubspace = GetLatestSubspace();
-                long serverClock = DateTime.UtcNow.Ticks;
+                long serverClock = Settings.settingsStore.keepTickingWhileOffline ? subspaces[latestSubspace].serverClock : DateTime.UtcNow.Ticks;
                 double planetTime = subspaces[latestSubspace].planetTime;
                 float subspaceSpeed = subspaces[latestSubspace].subspaceSpeed;
                 HandleNewSubspace(client, serverClock, planetTime, subspaceSpeed);
@@ -612,41 +616,77 @@ namespace DarkMultiPlayerServer.Messages
             }
         }
 
-        private static void LoadSavedSubspace()
+        private static void LoadSavedSubspaces()
         {
+            DarkLog.Debug("Loading and tidying up saved subspaces");
             try
             {
-                string subspaceFile = Path.Combine(Server.universeDirectory, "subspace.txt");
-                using (StreamReader sr = new StreamReader(subspaceFile))
+                foreach (string subspaceFile in Directory.GetFiles(Path.Combine(Server.universeDirectory, "Subspaces")))
                 {
-                    //Ignore the comment line.
-                    string firstLine = "";
-                    while (firstLine.StartsWith("#") || String.IsNullOrEmpty(firstLine))
-                    {
-                        firstLine = sr.ReadLine().Trim();
-                    }
+                    int subspaceID;
                     Subspace savedSubspace = new Subspace();
-                    int subspaceID = Int32.Parse(firstLine);
-                    savedSubspace.serverClock = Int64.Parse(sr.ReadLine().Trim());
-                    savedSubspace.planetTime = Double.Parse(sr.ReadLine().Trim());
-                    savedSubspace.subspaceSpeed = Single.Parse(sr.ReadLine().Trim());
-                    subspaces.Add(subspaceID, savedSubspace);
-                    lock (createLock)
+                    using (StreamReader sr = new StreamReader(subspaceFile))
                     {
-                        freeID = subspaceID + 1;
+                        //Ignore the comment line.
+                        string firstLine = "";
+                        while (firstLine.StartsWith("#") || String.IsNullOrEmpty(firstLine))
+                        {
+                            firstLine = sr.ReadLine().Trim();
+                        }
+
+                        subspaceID = int.Parse(firstLine);
+
+                        Int64 serverClock = Int64.Parse(sr.ReadLine().Trim());
+                        if (Settings.settingsStore.keepTickingWhileOffline) savedSubspace.serverClock = serverClock;
+                        else savedSubspace.serverClock = DateTime.UtcNow.Ticks;
+
+                        savedSubspace.planetTime = Double.Parse(sr.ReadLine().Trim());
+                        savedSubspace.subspaceSpeed = Single.Parse(sr.ReadLine().Trim());
+                        savedSubspace.playerName = sr.ReadLine().Trim();
                     }
+
+                    // Only keep the latest subspace for each player
+                    if (offlinePlayerSubspaces.ContainsKey(savedSubspace.playerName))
+                    {
+                        if (savedSubspace.planetTime > subspaces[offlinePlayerSubspaces[savedSubspace.playerName]].planetTime)
+                        {
+                            // Remove the obsolete subspace and delete the file
+                            DarkLog.Debug("Removing subspace " + offlinePlayerSubspaces[savedSubspace.playerName] + " from " + savedSubspace.playerName);
+                            subspaces.Remove(offlinePlayerSubspaces[savedSubspace.playerName]);
+                            File.Delete(Path.Combine(Server.universeDirectory, "Subspaces", offlinePlayerSubspaces[savedSubspace.playerName] + ".txt"));
+
+                            subspaces.Add(subspaceID, savedSubspace);
+                            offlinePlayerSubspaces[savedSubspace.playerName] = subspaceID;
+                        }
+                        else
+                        {
+                            // Discard the file
+                            File.Delete(subspaceFile);
+                        }
+                    }
+                    else
+                    {
+                        subspaces.Add(subspaceID, savedSubspace);
+                        offlinePlayerSubspaces.Add(savedSubspace.playerName, subspaceID);
+                    }
+
+                    freeID = Math.Max(freeID, subspaceID + 1);
                 }
             }
-            catch
+            finally
             {
-                DarkLog.Debug("Creating new subspace lock file");
-                Subspace newSubspace = new Subspace();
-                newSubspace.serverClock = DateTime.UtcNow.Ticks;
-                newSubspace.planetTime = 100d;
-                newSubspace.subspaceSpeed = 1f;
-                subspaces.Add(0, newSubspace);
-                SaveSubspace(0, newSubspace);
-                freeID = 1;
+                if (subspaces.Count == 0)
+                {
+                    DarkLog.Debug("Creating new subspace lock file");
+                    Subspace newSubspace = new Subspace();
+                    newSubspace.serverClock = DateTime.UtcNow.Ticks;
+                    newSubspace.planetTime = 100d;
+                    newSubspace.subspaceSpeed = 1f;
+                    newSubspace.playerName = "Jebediah Kerman";
+                    subspaces.Add(freeID, newSubspace);
+                    SaveSubspace(freeID, newSubspace);
+                    freeID++;
+                }
             }
         }
 
@@ -673,6 +713,14 @@ namespace DarkMultiPlayerServer.Messages
             SaveSubspace(latestID, subspaces[latestID]);
         }
 
+        private static void SaveAllSubspaces()
+        {
+            foreach (KeyValuePair<int, Subspace> subspace in subspaces)
+            {
+                SaveSubspace(subspace.Key, subspace.Value);
+            }
+        }
+
         private static void UpdateSubspace(int subspaceID)
         {
             //New time = Old time + (seconds since lock * subspace rate)
@@ -683,9 +731,14 @@ namespace DarkMultiPlayerServer.Messages
             subspaces[subspaceID].planetTime = newPlanetariumTime;
         }
 
+        private static void SaveSubspace(ClientObject client)
+        {
+            SaveSubspace(client.subspace, subspaces[client.subspace]);
+        }
+
         private static void SaveSubspace(int subspaceID, Subspace subspace)
         {
-            string subspaceFile = Path.Combine(Server.universeDirectory, "subspace.txt");
+            string subspaceFile = Path.Combine(Server.universeDirectory, "Subspaces", subspaceID + ".txt");
             using (StreamWriter sw = new StreamWriter(subspaceFile))
             {
                 sw.WriteLine("#Incorrectly editing this file will cause weirdness. If there is any errors, the universe time will be reset.");
@@ -695,6 +748,7 @@ namespace DarkMultiPlayerServer.Messages
                 sw.WriteLine(subspace.serverClock);
                 sw.WriteLine(subspace.planetTime);
                 sw.WriteLine(subspace.subspaceSpeed);
+                sw.WriteLine(subspace.playerName);
             }
         }
 
@@ -702,7 +756,7 @@ namespace DarkMultiPlayerServer.Messages
         {
             //When the last player disconnects and we are a no-tick-offline server, save the universe time.
             UpdateSubspace(GetLatestSubspace());
-            SaveLatestSubspace();
+            SaveAllSubspaces();
         }
 
         internal static void DisconnectPlayer(string playerName)
@@ -737,7 +791,7 @@ namespace DarkMultiPlayerServer.Messages
             offlinePlayerSubspaces.Clear();
             warpList.Clear();
             ignoreList = null;
-            LoadSavedSubspace();
+            LoadSavedSubspaces();
         }
     }
 }
