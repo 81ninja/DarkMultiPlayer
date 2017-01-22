@@ -73,10 +73,6 @@ namespace DarkMultiPlayer
         private Guid fromDockedVesselID;
         private Guid toDockedVesselID;
         private bool sentDockingDestroyUpdate;
-        //System.Reflection hackiness for loading kerbals into the crew roster:
-        private delegate bool AddCrewMemberToRosterDelegate(ProtoCrewMember pcm);
-
-        private AddCrewMemberToRosterDelegate AddCrewMemberToRoster;
 
         public static VesselWorker fetch
         {
@@ -1099,12 +1095,6 @@ namespace DarkMultiPlayer
         public void LoadKerbalsIntoGame()
         {
             DarkLog.Debug("Loading kerbals into game");
-            MethodInfo addMemberToCrewRosterMethod = typeof(KerbalRoster).GetMethod("AddCrewMember", BindingFlags.Public | BindingFlags.Instance);
-            AddCrewMemberToRoster = (AddCrewMemberToRosterDelegate)Delegate.CreateDelegate(typeof(AddCrewMemberToRosterDelegate), HighLogic.CurrentGame.CrewRoster, addMemberToCrewRosterMethod);
-            if (AddCrewMemberToRoster == null)
-            {
-                throw new Exception("Failed to load AddCrewMember delegate!");
-            }
 
             foreach (KeyValuePair<string, Queue<KerbalEntry>> kerbalQueue in kerbalProtoQueue)
             {
@@ -1145,7 +1135,7 @@ namespace DarkMultiPlayer
                 return;
             }
 
-            if (crewNode.GetValue("type") == "Tourist" || crewNode.GetValue("type") == "Unowned")
+            if (crewNode.GetValue("type") == "Tourist")
             {
                 ConfigNode dmpNode = null;
                 if (crewNode.TryGetNode("DarkMultiPlayer", ref dmpNode))
@@ -1155,7 +1145,7 @@ namespace DarkMultiPlayer
                     {
                         if (dmpOwner != Settings.fetch.playerPublicKey)
                         {
-                            DarkLog.Debug("Skipping load of kerbal that belongs to another player's contracts");
+                            DarkLog.Debug("Skipping load of tourist that belongs to another player");
                             return;
                         }
                     }
@@ -1175,7 +1165,7 @@ namespace DarkMultiPlayer
             }
             if (!HighLogic.CurrentGame.CrewRoster.Exists(protoCrew.name))
             {
-                AddCrewMemberToRoster(protoCrew);
+                HighLogic.CurrentGame.CrewRoster.AddCrewMember(protoCrew);
                 ConfigNode kerbalNode = new ConfigNode();
                 protoCrew.Save(kerbalNode);
                 byte[] kerbalBytes = ConfigNodeSerializer.fetch.Serialize(kerbalNode);
@@ -1794,7 +1784,7 @@ namespace DarkMultiPlayer
                 foreach (ProtoCrewMember pcm in part.protoModuleCrew)
                 {
                     // Ignore the tourists except those that haven't yet toured
-                    if (pcm.type != ProtoCrewMember.KerbalType.Tourist || (pcm.type == ProtoCrewMember.KerbalType.Tourist && !pcm.hasToured)) SendKerbalIfDifferent(pcm);
+                    if ((pcm.type == ProtoCrewMember.KerbalType.Tourist && !pcm.hasToured) || pcm.type != ProtoCrewMember.KerbalType.Tourist) SendKerbalIfDifferent(pcm);
                 }
             }
         }
@@ -1818,7 +1808,7 @@ namespace DarkMultiPlayer
                 foreach (ProtoCrewMember pcm in part.protoModuleCrew)
                 {
                     // Ignore the tourists except those that haven't yet toured
-                    if (pcm.type != ProtoCrewMember.KerbalType.Tourist || (pcm.type == ProtoCrewMember.KerbalType.Tourist && !pcm.hasToured)) SendKerbalIfDifferent(pcm);
+                    if ((pcm.type == ProtoCrewMember.KerbalType.Tourist && !pcm.hasToured) || pcm.type != ProtoCrewMember.KerbalType.Tourist) SendKerbalIfDifferent(pcm);
                 }
             }
         }
