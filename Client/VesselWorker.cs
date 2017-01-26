@@ -1253,7 +1253,7 @@ namespace DarkMultiPlayer
                         else
                         {
                             DarkLog.Debug("WARNING: Protovessel " + vpu.vesselID + " is DAMAGED!. Skipping load.");
-                            ChatWorker.fetch.PMMessageServer("WARNING: Protovessel " + vpu.vesselID + " is DAMAGED!. Skipping load.");
+                            ChatWorker.fetch.PMMessageServer("WARNING: Not all vessels loaded.");
                         }
                     }
                 }
@@ -1482,7 +1482,7 @@ namespace DarkMultiPlayer
                         if (!partsList.Contains(pps.partName))
                         {
                             DarkLog.Debug("WARNING: Protovessel " + protovesselID + " (" + pv.vesselName + ") contains the banned part '" + pps.partName + "'!. Skipping load.");
-                            ChatWorker.fetch.PMMessageServer("WARNING: Protovessel " + protovesselID + " (" + pv.vesselName + ") contains the banned part '" + pps.partName + "'!. Skipping load.");
+                            ChatWorker.fetch.PMMessageServer("WARNING: Vessel " + pv.vesselName + " contains the banned part '" + pps.partName + "'!. Skipping load.");
                             pv = null;
                             break;
                         }
@@ -1490,8 +1490,8 @@ namespace DarkMultiPlayer
                     if (pps.partInfo == null)
                     {
                         DarkLog.Debug("WARNING: Protovessel " + protovesselID + " (" + pv.vesselName + ") contains the missing part '" + pps.partName + "'!. Skipping load.");
-                        ChatWorker.fetch.PMMessageServer("WARNING: Protovessel " + protovesselID + " (" + pv.vesselName + ") contains the missing part '" + pps.partName + "'!. Skipping load.");
-                        ScreenMessages.PostScreenMessage("Cannot load '" + pv.vesselName + "' - you are missing " + pps.partName, 10f, ScreenMessageStyle.UPPER_CENTER);
+                        ChatWorker.fetch.PMMessageServer("WARNING: Vessel " + pv.vesselName + "'" + pps.partName + "'!. Skipping load.");
+                        //ScreenMessages.PostScreenMessage("Cannot load '" + pv.vesselName + "' - you are missing " + pps.partName, 10f, ScreenMessageStyle.UPPER_CENTER);
                         pv = null;
                         break;
                     }
@@ -1500,8 +1500,8 @@ namespace DarkMultiPlayer
                         if (!partResourceLibrary.resourceDefinitions.Contains(resource.resourceName))
                         {
                             DarkLog.Debug("WARNING: Protovessel " + protovesselID + " (" + pv.vesselName + ") contains the missing resource '" + resource.resourceName + "'!. Skipping load.");
-                            ChatWorker.fetch.PMMessageServer("WARNING: Protovessel " + protovesselID + " (" + pv.vesselName + ") contains the missing resource '" + resource.resourceName + "'!. Skipping load.");
-                            ScreenMessages.PostScreenMessage("Cannot load '" + pv.vesselName + "' - you are missing the resource " + resource.resourceName, 10f, ScreenMessageStyle.UPPER_CENTER);
+                            ChatWorker.fetch.PMMessageServer("WARNING: Vessel " + pv.vesselName + " contains the missing resource '" + resource.resourceName + "'!. Skipping load.");
+                            //ScreenMessages.PostScreenMessage("Cannot load '" + pv.vesselName + "' - you are missing the resource " + resource.resourceName, 10f, ScreenMessageStyle.UPPER_CENTER);
                             pv = null;
                             break;
                         }
