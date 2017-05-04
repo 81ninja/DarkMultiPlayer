@@ -11,7 +11,6 @@ namespace DarkMultiPlayer
     public class ScenarioWorker
     {
         public bool workerEnabled = false;
-        private static ScenarioWorker singleton;
         private Dictionary<string, string> checkData = new Dictionary<string, string>();
         private Queue<ScenarioEntry> scenarioQueue = new Queue<ScenarioEntry>();
         private bool blockScenarioDataSends = false;
@@ -23,13 +22,19 @@ namespace DarkMultiPlayer
         private delegate bool AddCrewMemberToRosterDelegate(ProtoCrewMember pcm);
         // Game hooks
         private bool registered;
+        //Services
+        private DMPGame dmpGame;
+        private VesselWorker vesselWorker;
+        private ConfigNodeSerializer configNodeSerializer;
+        private NetworkWorker networkWorker;
 
-        public static ScenarioWorker fetch
+        public ScenarioWorker(DMPGame dmpGame, VesselWorker vesselWorker, ConfigNodeSerializer configNodeSerializer, NetworkWorker networkWorker)
         {
-            get
-            {
-                return singleton;
-            }
+            this.dmpGame = dmpGame;
+            this.vesselWorker = vesselWorker;
+            this.configNodeSerializer = configNodeSerializer;
+            this.networkWorker = networkWorker;
+            dmpGame.updateEvent.Add(Update);
         }
 
         private void RegisterGameHooks()
@@ -75,13 +80,13 @@ namespace DarkMultiPlayer
                         rescueKerbal = HighLogic.CurrentGame.CrewRoster[kerbalName];
                         DarkLog.Debug("Kerbal " + kerbalName + " already exists, skipping respawn");
                     }
-                    if (rescueKerbal != null) VesselWorker.fetch.SendKerbalIfDifferent(rescueKerbal);
+                    if (rescueKerbal != null) vesselWorker.SendKerbalIfDifferent(rescueKerbal);
                 }
 
                 if (partID != 0)
                 {
                     Vessel contractVessel = FinePrint.Utilities.VesselUtilities.FindVesselWithPartIDs(new List<uint> { partID });
-                    if (contractVessel != null) VesselWorker.fetch.SendVesselUpdateIfNeeded(contractVessel);
+                    if (contractVessel != null) vesselWorker.SendVesselUpdateIfNeeded(contractVessel);
                 }
             }
 
@@ -106,7 +111,7 @@ namespace DarkMultiPlayer
                             DarkLog.Debug("Skipped respawn of existing tourist " + touristName);
                             pcm = HighLogic.CurrentGame.CrewRoster[touristName];
                         }
-                        if (pcm != null) VesselWorker.fetch.SendKerbalIfDifferent(pcm);
+                        if (pcm != null) vesselWorker.SendKerbalIfDifferent(pcm);
                     }
                 }
             }
@@ -120,7 +125,7 @@ namespace DarkMultiPlayer
             if (contractNode.GetValue("type") == "RecoverAsset")
             {
                 string kerbalName = contractNode.GetValue("kerbalName");
-                VesselWorker.fetch.SendKerbalIfDifferent(HighLogic.CurrentGame.CrewRoster[kerbalName]);
+                vesselWorker.SendKerbalIfDifferent(HighLogic.CurrentGame.CrewRoster[kerbalName]);
             }
         }
 
@@ -226,7 +231,7 @@ namespace DarkMultiPlayer
                 ConfigNode scenarioNode = new ConfigNode();
                 sm.Save(scenarioNode);
 
-                byte[] scenarioBytes = ConfigNodeSerializer.fetch.Serialize(scenarioNode);
+                byte[] scenarioBytes = configNodeSerializer.Serialize(scenarioNode);
                 string scenarioHash = Common.CalculateSHA256Hash(scenarioBytes);
                 if (scenarioBytes.Length == 0)
                 {
@@ -253,11 +258,11 @@ namespace DarkMultiPlayer
             {
                 if (highPriority)
                 {
-                    NetworkWorker.fetch.SendScenarioModuleDataHighPriority(scenarioName.ToArray(), scenarioData.ToArray());
+                    networkWorker.SendScenarioModuleDataHighPriority(scenarioName.ToArray(), scenarioData.ToArray());
                 }
                 else
                 {
-                    NetworkWorker.fetch.SendScenarioModuleData(scenarioName.ToArray(), scenarioData.ToArray());
+                    networkWorker.SendScenarioModuleData(scenarioName.ToArray(), scenarioData.ToArray());
                 }
             }
         }
@@ -282,7 +287,7 @@ namespace DarkMultiPlayer
                     }
                     else
                     {
-                        DarkLog.Debug("Skipping " + psm.moduleName + " scenario data in " + Client.fetch.gameMode + " mode");
+                        DarkLog.Debug("Skipping " + psm.moduleName + " scenario data in " + dmpGame.gameMode + " mode");
                     }
                 }
             }
@@ -331,7 +336,7 @@ namespace DarkMultiPlayer
                             pcm.ChangeName(kerbalName);
                             HighLogic.CurrentGame.CrewRoster.AddCrewMember(pcm);
                             //Also send it off to the server
-                            VesselWorker.fetch.SendKerbalIfDifferent(pcm);
+                            vesselWorker.SendKerbalIfDifferent(pcm);
                         }
                     }
                 }
@@ -400,7 +405,7 @@ namespace DarkMultiPlayer
         {
             if (!IsScenarioModuleAllowed(entry.scenarioName))
             {
-                DarkLog.Debug("Skipped '" + entry.scenarioName + "' scenario data  in " + Client.fetch.gameMode + " mode");
+                DarkLog.Debug("Skipped '" + entry.scenarioName + "' scenario data  in " + dmpGame.gameMode + " mode");
                 return;
             }
 
@@ -466,18 +471,10 @@ namespace DarkMultiPlayer
             scenarioQueue.Enqueue(entry);
         }
 
-        public static void Reset()
+        public void Stop()
         {
-            lock (Client.eventLock)
-            {
-                if (singleton != null)
-                {
-                    singleton.workerEnabled = false;
-                    Client.updateEvent.Remove(singleton.Update);
-                }
-                singleton = new ScenarioWorker();
-                Client.updateEvent.Add(singleton.Update);
-            }
+            workerEnabled = false;
+            dmpGame.updateEvent.Remove(Update);
         }
     }
 
