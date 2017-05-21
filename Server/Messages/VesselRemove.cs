@@ -15,16 +15,10 @@ namespace DarkMultiPlayerServer.Messages
                 mr.Read<double>();
                 string vesselID = mr.Read<string>();
                 bool isDockingUpdate = mr.Read<bool>();
-                if (!isDockingUpdate)
-                {
-                    DarkLog.Debug("Removing vessel " + vesselID + " from " + client.playerName);
-                }
-                else
-                {
-                    DarkLog.Debug("Removing DOCKED vessel " + vesselID + " from " + client.playerName);
-                }
                 if (File.Exists(Path.Combine(Server.universeDirectory, "Vessels", vesselID + ".txt")))
                 {
+                    string vesselName = File.ReadAllLines(Path.Combine(Server.universeDirectory, "Vessels", vesselID + ".txt"))[1].Remove(0, 7);
+                    DarkLog.Debug("Removing " + (isDockingUpdate ? "DOCKED" : "") + "vessel [" + vesselName + "] (" + vesselID + ") from " + client.playerName);
                     lock (Server.universeSizeLock)
                     {
                         File.Delete(Path.Combine(Server.universeDirectory, "Vessels", vesselID + ".txt"));

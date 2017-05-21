@@ -20,20 +20,12 @@ namespace DarkMultiPlayerServer.Messages
                 bool isFlyingUpdate = mr.Read<bool>();
                 byte[] possibleCompressedBytes = mr.Read<byte[]>();
                 byte[] vesselData = Compression.DecompressIfNeeded(possibleCompressedBytes);
-                if (isFlyingUpdate)
+
+                string vesselName = System.Text.Encoding.ASCII.GetString(vesselData).Split(new string[] { Environment.NewLine }, 3, StringSplitOptions.None)[1].Remove(0, 7);
+                string statusUpdate = isFlyingUpdate ? "FLYING" : isDockingUpdate ? "DOCKED" : "";
+                DarkLog.Debug("Relaying " + statusUpdate + " vessel \"" + vesselName + "\" (" + vesselGuid + ") from " + client.playerName);
+                if (!isFlyingUpdate)
                 {
-                    DarkLog.Debug("Relaying FLYING vessel " + vesselGuid + " from " + client.playerName);
-                }
-                else
-                {
-                    if (!isDockingUpdate)
-                    {
-                        DarkLog.Debug("Saving vessel " + vesselGuid + " from " + client.playerName);
-                    }
-                    else
-                    {
-                        DarkLog.Debug("Saving DOCKED vessel " + vesselGuid + " from " + client.playerName);
-                    }
                     lock (Server.universeSizeLock)
                     {
                         File.WriteAllBytes(Path.Combine(Server.universeDirectory, "Vessels", vesselGuid + ".txt"), vesselData);
