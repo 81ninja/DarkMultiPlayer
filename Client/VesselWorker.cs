@@ -1385,7 +1385,7 @@ namespace DarkMultiPlayer
                 //Fix up flag URLS.
                 if (part.flagURL.Length != 0)
                 {
-                    string flagFile = Path.Combine(Path.Combine(KSPUtil.ApplicationRootPath, "GameData"), part.flagURL + ".png");
+                    string flagFile = Path.Combine(Client.dmpClient.gameDataDir, part.flagURL + ".png");
                     if (!File.Exists(flagFile))
                     {
                         DarkLog.Debug("Flag '" + part.flagURL + "' doesn't exist, setting to default!");
