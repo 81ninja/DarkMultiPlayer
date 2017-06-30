@@ -15,7 +15,7 @@ namespace DarkMultiPlayerServer.Messages
                 //Don't care about subspace / send time.
                 mr.Read<double>();
                 string kerbalName = mr.Read<string>();
-                DarkLog.Debug("Saving kerbal " + kerbalName + " from " + client.playerName);
+                DarkLog.Normal("Saving kerbal " + kerbalName + " from " + client.playerName);
                 byte[] kerbalData = mr.Read<byte[]>();
                 lock (Server.universeSizeLock)
                 {

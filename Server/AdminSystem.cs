@@ -27,7 +27,7 @@ namespace DarkMultiPlayerServer
 
         private void LoadAdmins()
         {
-            DarkLog.Debug("Loading admins");
+            DarkLog.Normal("Loading admins");
             serverAdmins.Clear();
 
             if (File.Exists(adminListFile))
@@ -42,7 +42,7 @@ namespace DarkMultiPlayerServer
 
         private void SaveAdmins()
         {
-            DarkLog.Debug("Saving admins");
+            DarkLog.Normal("Saving admins");
             try
             {
                 if (File.Exists(adminListFile))

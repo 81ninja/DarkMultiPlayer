@@ -44,7 +44,7 @@ namespace DarkMultiPlayerServer.Messages
                                     Directory.CreateDirectory(playerScreenshotDirectory);
                                 }
                                 string screenshotFile = Path.Combine(playerScreenshotDirectory, DateTime.Now.ToString("yyyy-MM-dd HH-mm-ss") + ".png");
-                                DarkLog.Debug("Saving screenshot from " + fromPlayer);
+                                DarkLog.Normal("Saving screenshot from " + fromPlayer);
 
                                 byte[] screenshotData = mr.Read<byte[]>();
 
@@ -64,7 +64,7 @@ namespace DarkMultiPlayerServer.Messages
                                             }
                                         }
                                         File.Delete(deleteFile);
-                                        DarkLog.Debug("Removing old screenshot " + Path.GetFileName(deleteFile));
+                                        DarkLog.Normal("Removing old screenshot " + Path.GetFileName(deleteFile));
                                     }
                                 }
 
@@ -119,7 +119,7 @@ namespace DarkMultiPlayerServer.Messages
                                                 playerDownloadedScreenshotIndex[entry.Key].Add(fromPlayer, 0);
                                             }
                                             playerDownloadedScreenshotIndex[entry.Key][fromPlayer] = playerUploadedScreenshotIndex[fromPlayer];
-                                            DarkLog.Debug("Sending screenshot from " + fromPlayer + " to " + entry.Key);
+                                            DarkLog.Normal("Sending screenshot from " + fromPlayer + " to " + entry.Key);
                                             using (MessageWriter mw = new MessageWriter())
                                             {
                                                 ServerMessage sendStartMessage = new ServerMessage();
@@ -144,13 +144,13 @@ namespace DarkMultiPlayerServer.Messages
                             {
                                 if (playerWatchScreenshot.ContainsKey(fromPlayer))
                                 {
-                                    DarkLog.Debug(fromPlayer + " is no longer watching screenshots from " + playerWatchScreenshot[fromPlayer]);
+                                    DarkLog.Normal(fromPlayer + " is no longer watching screenshots from " + playerWatchScreenshot[fromPlayer]);
                                     playerWatchScreenshot.Remove(fromPlayer);
                                 }
                             }
                             else
                             {
-                                DarkLog.Debug(fromPlayer + " is watching screenshots from " + watchPlayer);
+                                DarkLog.Normal(fromPlayer + " is watching screenshots from " + watchPlayer);
                                 playerWatchScreenshot[fromPlayer] = watchPlayer;
                                 if (!playerDownloadedScreenshotIndex.ContainsKey(fromPlayer))
                                 {
@@ -217,7 +217,7 @@ namespace DarkMultiPlayerServer.Messages
                                         ClientObject toClient = ClientHandler.GetClientByName(fromPlayer);
                                         if (toClient != null)
                                         {
-                                            DarkLog.Debug("Sending saved screenshot from " + watchPlayer + " to " + fromPlayer);
+                                            DarkLog.Normal("Sending saved screenshot from " + watchPlayer + " to " + fromPlayer);
                                             ClientHandler.SendToClient(toClient, sendStartMessage, false);
                                             ClientHandler.SendToClient(toClient, screenshotMessage, false);
                                         }

@@ -153,7 +153,7 @@ namespace DarkMultiPlayerServer
 
                 if (!String.IsNullOrEmpty(kerbalName))
                 {
-                    DarkLog.Debug("Renaming kerbal " + kerbalCount + " to " + kerbalName);
+                    DarkLog.Normal("Renaming kerbal " + kerbalCount + " to " + kerbalName);
                     File.Move(oldKerbalFile, Path.Combine(kerbalPath, kerbalName + ".txt"));
                 }
                 kerbalCount++;

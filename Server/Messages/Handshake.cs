@@ -213,7 +213,7 @@ namespace DarkMultiPlayerServer.Messages
                 SendHandshakeReply(client, handshakeReponse, "success");
                 Server.playerCount = ClientHandler.GetActiveClientCount();
                 Server.players = ClientHandler.GetActivePlayerNames();
-                DarkLog.Debug("Online players is now: " + Server.playerCount + ", connected: " + ClientHandler.GetClients().Length);
+                DarkLog.Normal("Online players is now: " + Server.playerCount + ", connected: " + ClientHandler.GetClients().Length);
 
             }
             else

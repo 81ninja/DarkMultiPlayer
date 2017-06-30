@@ -36,7 +36,7 @@ namespace DarkMultiPlayerServer.Messages
             {
                 reason = mr.Read<string>();
             }
-            DarkLog.Debug(client.playerName + " sent connection end message, reason: " + reason);
+            DarkLog.Normal(client.playerName + " sent connection end message, reason: " + reason);
             ClientHandler.DisconnectClient(client);
         }
     }

@@ -39,7 +39,7 @@ namespace DarkMultiPlayerServer.Messages
                     byte[] kerbalData = File.ReadAllBytes(kerbalFile);
                     SendKerbal(client, kerbalName, kerbalData);
                 }
-                DarkLog.Debug("Sending " + client.playerName + " " + kerbalFiles.Length + " kerbals...");
+                DarkLog.Normal("Sending " + client.playerName + " " + kerbalFiles.Length + " kerbals...");
             }
             SendKerbalsComplete(client);
         }

@@ -61,7 +61,7 @@ namespace DarkMultiPlayerServer
                 {
                     if ((DateTime.UtcNow.Ticks - disconnectTime) > 50000000)
                     {
-                        DarkLog.Debug("Shutting down with " + Server.playerCount + " players, " + clients.Count + " connected clients");
+                        DarkLog.Error("Shutting down with " + Server.playerCount + " players, " + clients.Count + " connected clients");
                         break;
                     }
                     sendingHighPriotityMessages = false;
@@ -159,7 +159,7 @@ namespace DarkMultiPlayerServer
                 clients = newList.AsReadOnly();
                 Server.playerCount = GetActiveClientCount();
                 Server.players = GetActivePlayerNames();
-                DarkLog.Debug("Online players is now: " + Server.playerCount + ", connected: " + clients.Count);
+                DarkLog.Normal("Online players is now: " + Server.playerCount + ", connected: " + clients.Count);
             }
         }
 
@@ -311,7 +311,7 @@ namespace DarkMultiPlayerServer
                 }
                 catch (Exception e)
                 {
-                    DarkLog.Debug("Error rewriting SYNC_TIME packet, Exception " + e);
+                    DarkLog.Error("Error rewriting SYNC_TIME packet, Exception " + e);
                 }
             }
             //Continue sending
@@ -506,7 +506,7 @@ namespace DarkMultiPlayerServer
                     clients = newList.AsReadOnly();
                     Server.playerCount = GetActiveClientCount();
                     Server.players = GetActivePlayerNames();
-                    DarkLog.Debug("Online players is now: " + Server.playerCount + ", connected: " + clients.Count);
+                    DarkLog.Normal("Online players is now: " + Server.playerCount + ", connected: " + clients.Count);
                     Messages.WarpControl.DisconnectPlayer(client);
                 }
                 //Disconnect
@@ -540,7 +540,7 @@ namespace DarkMultiPlayerServer
                     }
                     catch (Exception e)
                     {
-                        DarkLog.Debug("Error closing client connection: " + e.Message);
+                        DarkLog.Error("Error closing client connection: " + e.Message);
                     }
                     Server.lastPlayerActivity = Server.serverClock.ElapsedMilliseconds;
                 }
@@ -647,7 +647,7 @@ namespace DarkMultiPlayerServer
                     Messages.ConnectionEnd.HandleConnectionEnd(client, message.data);
                     break;
                 default:
-                    DarkLog.Debug("Unhandled message type " + message.type);
+                    DarkLog.Error("Unhandled message type " + message.type);
                     Messages.ConnectionEnd.SendConnectionEnd(client, "Unhandled message type " + message.type);
 #if DEBUG
                     throw new NotImplementedException("Message type not implemented");
@@ -659,7 +659,7 @@ namespace DarkMultiPlayerServer
             }
             catch (Exception e)
             {
-                DarkLog.Debug("Error handling " + message.type + " from " + client.playerName + ", exception: " + e);
+                DarkLog.Error("Error handling " + message.type + " from " + client.playerName + ", exception: " + e);
                 Messages.ConnectionEnd.SendConnectionEnd(client, "Server failed to process " + message.type + " message");
             }
 #endif

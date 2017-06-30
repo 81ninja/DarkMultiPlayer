@@ -21,9 +21,10 @@ namespace DarkMultiPlayerServer.Messages
                 byte[] possibleCompressedBytes = mr.Read<byte[]>();
                 byte[] vesselData = Compression.DecompressIfNeeded(possibleCompressedBytes);
 
-                string vesselName = System.Text.Encoding.ASCII.GetString(vesselData).Split(new string[] { Environment.NewLine }, 3, StringSplitOptions.None)[1].Remove(0, 7);
-                string statusUpdate = isFlyingUpdate ? "FLYING" : isDockingUpdate ? "DOCKED" : "";
-                DarkLog.Debug("Relaying " + statusUpdate + " vessel \"" + vesselName + "\" (" + vesselGuid + ") from " + client.playerName);
+                string vesselToString = System.Text.Encoding.ASCII.GetString(vesselData);
+                string vesselName = vesselToString.Substring(vesselToString.IndexOf("name = "), 255).Split(Environment.NewLine.ToCharArray())[0].Split(new char[] { '=' })[1].Trim();
+                string statusUpdate = isFlyingUpdate ? " FLYING " : isDockingUpdate ?  " DOCKED " : " ";
+                DarkLog.Debug("Relaying" + statusUpdate + "vessel \"" + vesselName + "\" (" + vesselGuid + ") from " + client.playerName);
                 if (!isFlyingUpdate)
                 {
                     lock (Server.universeSizeLock)

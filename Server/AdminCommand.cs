@@ -32,7 +32,7 @@ namespace DarkMultiPlayerServer
                     {
                         if (!AdminSystem.fetch.IsAdmin(playerName))
                         {
-                            DarkLog.Debug("Added '" + playerName + "' to admin list.");
+                            DarkLog.Normal("Added '" + playerName + "' to admin list.");
                             AdminSystem.fetch.AddAdmin(playerName);
                             //Notify all players an admin has been added
                             ServerMessage newMessage = new ServerMessage();

@@ -18,7 +18,7 @@ namespace DarkMultiPlayerServer.Messages
                 if (File.Exists(Path.Combine(Server.universeDirectory, "Vessels", vesselID + ".txt")))
                 {
                     string vesselName = File.ReadAllLines(Path.Combine(Server.universeDirectory, "Vessels", vesselID + ".txt"))[1].Remove(0, 7);
-                    DarkLog.Debug("Removing " + (isDockingUpdate ? "DOCKED" : "") + "vessel [" + vesselName + "] (" + vesselID + ") from " + client.playerName);
+                    DarkLog.Normal("Removing" + (isDockingUpdate ? " DOCKED " : " ") + "vessel [" + vesselName + "] (" + vesselID + ") from " + client.playerName);
                     lock (Server.universeSizeLock)
                     {
                         File.Delete(Path.Combine(Server.universeDirectory, "Vessels", vesselID + ".txt"));
@@ -39,7 +39,7 @@ namespace DarkMultiPlayerServer.Messages
                 //Don't care about the subspace on the server.
                 mr.Read<double>();
                 string kerbalName = mr.Read<string>();
-                DarkLog.Debug("Removing kerbal " + kerbalName + " from " + client.playerName);
+                DarkLog.Normal("Removing kerbal " + kerbalName + " from " + client.playerName);
                 if (File.Exists(Path.Combine(Server.universeDirectory, "Kerbals", kerbalName + ".txt")))
                 {
                     lock (Server.universeSizeLock)

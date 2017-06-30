@@ -57,7 +57,7 @@ namespace DarkMultiPlayerServer
                         }
                         ClientHandler.SendToAll(null, newMessage, false);
                         numberOfRemovals++;
-                        DarkLog.Debug("Removed debris vessel " + vesselID);
+                        DarkLog.Normal("Removed debris vessel " + vesselID);
                     }
                 }
                 DarkLog.Normal("Removed " + numberOfRemovals + " debris");

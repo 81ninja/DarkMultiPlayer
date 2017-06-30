@@ -33,7 +33,7 @@ namespace DarkMultiPlayerServer.Messages
                         }
                     }
                 }
-                DarkLog.Debug("Sending " + client.playerName + " " + sendVesselCount + " vessels, cached: " + cachedVesselCount + "...");
+                DarkLog.Normal("Sending " + client.playerName + " " + sendVesselCount + " vessels, cached: " + cachedVesselCount + "...");
                 SendVesselsComplete(client);
             }
         }

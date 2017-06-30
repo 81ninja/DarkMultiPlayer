@@ -76,7 +76,7 @@ namespace DarkMultiPlayerServer.Messages
                 }
                 newMessage.data = mw.GetMessageBytes();
                 ClientHandler.SendToClient(client, newMessage, true);
-                DarkLog.Debug("Sending " + client.playerName + " " + numberOfCrafts + " craft library entries");
+                DarkLog.Normal("Sending " + client.playerName + " " + numberOfCrafts + " craft library entries");
             }
         }
 
@@ -111,7 +111,7 @@ namespace DarkMultiPlayerServer.Messages
                             }
                             string craftFile = Path.Combine(typePath, uploadName + ".craft");
                             File.WriteAllBytes(craftFile, uploadData);
-                            DarkLog.Debug("Saving " + uploadName + ", type: " + uploadType.ToString() + " from " + fromPlayer);
+                            DarkLog.Normal("Saving " + uploadName + ", type: " + uploadType.ToString() + " from " + fromPlayer);
                             using (MessageWriter mw = new MessageWriter())
                             {
                                 ServerMessage newMessage = new ServerMessage();
@@ -156,7 +156,7 @@ namespace DarkMultiPlayerServer.Messages
                                 if (hasCraft)
                                 {
                                     mw.Write<byte[]>(File.ReadAllBytes(craftFile));
-                                    DarkLog.Debug("Sending " + fromPlayer + " " + requestedName + " from " + craftOwner);
+                                    DarkLog.Normal("Sending " + fromPlayer + " " + requestedName + " from " + craftOwner);
                                 }
                                 newMessage.data = mw.GetMessageBytes();
                             }
@@ -177,7 +177,7 @@ namespace DarkMultiPlayerServer.Messages
                                     if (File.Exists(craftFile))
                                     {
                                         File.Delete(craftFile);
-                                        DarkLog.Debug("Removing " + craftName + ", type: " + craftType.ToString() + " from " + fromPlayer);
+                                        DarkLog.Normal("Removing " + craftName + ", type: " + craftType.ToString() + " from " + fromPlayer);
                                     }
                                 }
                             }
