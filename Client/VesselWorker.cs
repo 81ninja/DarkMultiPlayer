@@ -903,6 +903,42 @@ namespace DarkMultiPlayer
             vesselPartsOk[checkVessel.id] = (bannedParts.Count == 0);
         }
 
+        public bool AddOrUpdateDMPControlNode(ref ConfigNode node, string key = null, object value = null)
+        {
+            ConfigNode dmpNode = new ConfigNode();
+            if (!node.TryGetNode("DarkMultiPlayer", ref dmpNode))
+                dmpNode = new ConfigNode("DarkMultiPlayer");
+            if (key == null)
+            {
+                if (node.HasNode("DarkMultiPlayer")) {
+                    node.RemoveNode("DarkMultiPlayer");
+                    return true;
+                }
+                else return false;
+            }
+            if (value == null) {
+                if (dmpNode.HasValue(key))
+                {
+                    dmpNode.RemoveNode(key);
+                    return true;
+                }
+                else return false;
+            }
+
+            dmpNode.SetValue("lastChangedBy", dmpSettings.playerName, true);
+            dmpNode.SetValue("lastChangedKey", dmpSettings.playerPublicKey, true);
+            node.SetNode("DarkMultiPlayer", dmpNode, true);
+
+            if (dmpNode.SetValue(key, (string)value, true)) return true;
+            else return false;
+        }
+
+        ///<summary>Adds/sets a value to the DarkMultiPlayer {} section of the node</summary>
+        public bool SetValue(ref ConfigNode node, string key, string value)
+        {
+            return AddOrUpdateDMPControlNode(ref node, key, value);
+        }
+
         public void SendVesselUpdateIfNeeded(Vessel checkVessel)
         {
             //Check vessel parts
@@ -1004,13 +1040,15 @@ namespace DarkMultiPlayer
         public void SendKerbalIfDifferent(ProtoCrewMember pcm)
         {
             ConfigNode kerbalNode = new ConfigNode();
+            // Add/update DMP control node
             pcm.Save(kerbalNode);
-            if (pcm.type == ProtoCrewMember.KerbalType.Tourist || pcm.type == ProtoCrewMember.KerbalType.Unowned)
-            {
-                ConfigNode dmpNode = new ConfigNode();
-                dmpNode.AddValue("contractOwner", dmpSettings.playerPublicKey);
-                kerbalNode.AddNode("DarkMultiPlayer", dmpNode);
-            }
+            bool isTouristOrUnowned = (pcm.type == ProtoCrewMember.KerbalType.Tourist || pcm.type == ProtoCrewMember.KerbalType.Unowned);
+            SetValue(ref kerbalNode, "contractOwner", (isTouristOrUnowned ? dmpSettings.playerPublicKey : null));
+            SetValue(ref kerbalNode, "touristsOwner", (isTouristOrUnowned ? dmpSettings.playerPublicKey : null));
+
+            SetValue(ref kerbalNode, "lastChangedBy", dmpSettings.playerName);
+            SetValue(ref kerbalNode, "lastChangedKey", dmpSettings.playerPublicKey);
+
             byte[] kerbalBytes = configNodeSerializer.Serialize(kerbalNode);
             if (kerbalBytes == null || kerbalBytes.Length == 0)
             {

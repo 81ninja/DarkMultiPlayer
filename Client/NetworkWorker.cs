@@ -1848,30 +1848,30 @@ namespace DarkMultiPlayer
             }
 
             // Handle contract vessels
-            bool isContractVessel = false;
-            foreach (ProtoPartSnapshot pps in vessel.protoPartSnapshots)
-            {
-                foreach (ProtoCrewMember pcm in pps.protoModuleCrew.ToArray())
-                {
-                    if (pcm.type == ProtoCrewMember.KerbalType.Tourist || pcm.type == ProtoCrewMember.KerbalType.Unowned)
-                    {
-                        isContractVessel = true;
-                    }
-                }
-            }
+            bool vesselHasTourists = false, isContractVessel = false;
             if (!asteroidWorker.VesselIsAsteroid(vessel) && (DiscoveryLevels)int.Parse(vessel.discoveryInfo.GetValue("state")) != DiscoveryLevels.Owned)
             {
                 isContractVessel = true;
             }
+            else
+            {
+                foreach (ProtoPartSnapshot pps in vessel.protoPartSnapshots)
+                {
+                    foreach (ProtoCrewMember pcm in pps.protoModuleCrew.ToArray())
+                    {
+                        if (pcm.type == ProtoCrewMember.KerbalType.Tourist || pcm.type == ProtoCrewMember.KerbalType.Unowned)
+                        {
+                            vesselHasTourists = true;
+                        }
+                    }
+                }
+            }
 
+            // Add/update DMP control node
             ConfigNode vesselNode = new ConfigNode();
             vessel.Save(vesselNode);
-            if (isContractVessel)
-            {
-                ConfigNode dmpNode = new ConfigNode();
-                dmpNode.AddValue("contractOwner", dmpSettings.playerPublicKey);
-                vesselNode.AddNode("DarkMultiPlayer", dmpNode);
-            }
+            vesselWorker.SetValue(ref vesselNode, "contractOwner", (isContractVessel ? dmpSettings.playerPublicKey : null));
+            vesselWorker.SetValue(ref vesselNode, "touristsOwner", (vesselHasTourists ? dmpSettings.playerPublicKey : null));
 
             ClientMessage newMessage = new ClientMessage();
             newMessage.type = ClientMessageType.VESSEL_PROTO;
