@@ -60,7 +60,7 @@ namespace DarkMultiPlayerServer
                         DarkLog.Normal("Removed debris vessel " + vesselID);
                     }
                 }
-                DarkLog.Normal("Removed " + numberOfRemovals + " debris");
+                if (numberOfRemovals > 0) DarkLog.Normal("Removed " + numberOfRemovals + " debris");
             }
         }
 

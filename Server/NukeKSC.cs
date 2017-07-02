@@ -64,7 +64,7 @@ namespace DarkMultiPlayerServer
                         numberOfRemovals++;
                     }
                 }
-                DarkLog.Normal("Nuked " + numberOfRemovals + " vessels around the KSC");
+                if(numberOfRemovals > 0) DarkLog.Normal("Nuked " + numberOfRemovals + " vessels around the KSC");
             }
         }
 
