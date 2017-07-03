@@ -19,7 +19,13 @@ namespace DarkMultiPlayerCommon
         //Bump this every time there is a network change (Basically, if MessageWriter or MessageReader is touched).
         public const int PROTOCOL_VERSION = 45;
         //Program version. This is written in the build scripts.
-        public const string PROGRAM_VERSION = "Custom";
+#if CLIENT || NINJA
+        public const string PROGRAM_VERSION = "81ninja/master";
+#elif DEBUG
+        public const string PROGRAM_VERSION = "81ninja/debug";
+#elif SERVER || RELEASE
+        public const string PROGRAM_VERSION = "v0.2.4.3";
+#endif
         //Mod control version - The last version to add parts
         public const string MODCONTROL_VERSION = "1.3";
         //Compression threshold

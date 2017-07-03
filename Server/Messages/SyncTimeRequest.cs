@@ -23,6 +23,7 @@ namespace DarkMultiPlayerServer.Messages
                         {
                             clientUniverseTime = mr.Read<double>();
                         }
+                        catch { }
                         finally
                         {
 

@@ -14,8 +14,6 @@ namespace DarkMultiPlayer
 
         public static void Reset()
         {
-            lock (Client.eventLock)
-            {
                 if (instance != null)
                 {
                     instance.DeregisterEvents();
@@ -23,7 +21,6 @@ namespace DarkMultiPlayer
 
                 instance = new ReputationSystem();
                 instance.RegisterEvents();
-            }
         }
 
         private void RegisterEvents()

@@ -244,6 +244,7 @@ namespace DarkMultiPlayer
             GameEvents.onPartCouple.Add(this.OnVesselDock);
             GameEvents.onCrewBoardVessel.Add(this.OnCrewBoard);
             GameEvents.onKerbalRemoved.Add(OnKerbalRemoved);
+            GameEvents.onKerbalStatusChange.Add(OnKerbalStatusChange);
         }
 
         private void UnregisterGameHooks()
@@ -255,6 +256,7 @@ namespace DarkMultiPlayer
             GameEvents.onPartCouple.Remove(this.OnVesselDock);
             GameEvents.onCrewBoardVessel.Remove(this.OnCrewBoard);
             GameEvents.onKerbalRemoved.Remove(OnKerbalRemoved);
+            GameEvents.onKerbalStatusChange.Remove(OnKerbalStatusChange);
         }
 
         private void HandleDocking()
@@ -1961,6 +1963,34 @@ namespace DarkMultiPlayer
         private void OnKerbalRemoved(ProtoCrewMember pcm)
         {
             SendKerbalRemove(pcm.name);
+        }
+
+        private void OnKerbalStatusChange(ProtoCrewMember pcm, ProtoCrewMember.RosterStatus fromStatus, ProtoCrewMember.RosterStatus toStatus)
+        {
+            /*  public enum RosterStatus
+                {
+                    Available = 0,
+                    Assigned = 1,
+                    Dead = 2,
+                    Missing = 3
+                }
+
+                So... intended behavior:
+                    Available<->Assigned: Check in/out the kerbal
+                    Missing:        
+                    Dead: update the server and other clients on the event    
+                     
+            */
+            switch (toStatus)
+            {
+                case ProtoCrewMember.RosterStatus.Available:
+                case ProtoCrewMember.RosterStatus.Assigned:
+                case ProtoCrewMember.RosterStatus.Missing:
+                case ProtoCrewMember.RosterStatus.Dead:
+                    // Send an update to the server immediately
+                    SendKerbalIfDifferent(pcm);
+                    break;
+            }
         }
 
         public void KillVessel(Vessel killVessel)
