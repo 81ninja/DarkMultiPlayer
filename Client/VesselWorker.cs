@@ -468,6 +468,7 @@ namespace DarkMultiPlayer
                 {
                     DarkLog.Debug("Unsafe revert detected!");
                     ScreenMessages.PostScreenMessage("Unsafe revert detected!", 5f, ScreenMessageStyle.UPPER_CENTER);
+                    chatWorker.PMMessageServer("Warning: Unsafe revert by player " + dmpSettings.playerName);
                 }
                 else
                 {
@@ -594,6 +595,7 @@ namespace DarkMultiPlayer
                 }
                 DarkLog.Debug("Reverted " + updatesReverted + " updates");
                 ScreenMessages.PostScreenMessage("Reverted " + updatesReverted + " updates", 5f, ScreenMessageStyle.UPPER_CENTER);
+                chatWorker.PMMessageServer("Player " + dmpSettings.playerName + " reverted " +updatesReverted + " updates");
             }
             lastUniverseTime = newUniverseTime;
         }
