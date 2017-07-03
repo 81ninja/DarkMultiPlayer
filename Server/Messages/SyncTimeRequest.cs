@@ -14,8 +14,25 @@ namespace DarkMultiPlayerServer.Messages
             {
                 using (MessageReader mr = new MessageReader(messageData))
                 {
-                    //Client send time
-                    mw.Write<long>(mr.Read<long>());
+                    //Client send and universe time
+                    long clientSendTime = mr.Read<long>();
+                    // Check if the client is requesting a time in the past (= revert)
+                    {
+                        double clientUniverseTime = double.PositiveInfinity;
+                        try // For compatibility with protocol 45
+                        {
+                            clientUniverseTime = mr.Read<double>();
+                        }
+                        finally
+                        {
+
+                            if (clientUniverseTime < client.lastSubspaceTime)
+                            {
+                                DarkLog.Normal("Detected revert by client " + client.playerName);
+                            }
+                        }
+                    }
+                    mw.Write<long>(clientSendTime);
                     //Server receive time
                     mw.Write<long>(DateTime.UtcNow.Ticks);
                     newMessage.data = mw.GetMessageBytes();

@@ -876,6 +876,7 @@ namespace DarkMultiPlayerServer
         //subspace tracking
         public int subspace = -1;
         public float subspaceRate = 1f;
+        public double lastSubspaceTime = double.NegativeInfinity;
         //vessel tracking
         public string activeVessel = "";
         //connection

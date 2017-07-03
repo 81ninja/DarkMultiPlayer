@@ -1756,6 +1756,7 @@ namespace DarkMultiPlayer
             using (MessageWriter mw = new MessageWriter())
             {
                 mw.Write<long>(DateTime.UtcNow.Ticks);
+                mw.Write<double>(timeSyncer.GetUniverseTime());
                 messageBytes = mw.GetMessageBytes();
             }
             ClientMessage newMessage = new ClientMessage();
