@@ -1705,12 +1705,10 @@ namespace DarkMultiPlayer
 
         public void OnVesselRenamed(GameEvents.HostedFromToAction<Vessel, string> eventData)
         {
-#if DEBUG
             Vessel renamedVessel = eventData.host;
             string fromName = eventData.from, toName = eventData.to;
             DarkLog.Debug("Sending vessel [" + renamedVessel.name + "] renamed to [" + toName + "]");
-#endif
-            SendVesselUpdateIfNeeded(eventData.host);
+            SendVesselUpdateIfNeeded(renamedVessel);
         }
 
         public void OnVesselDestroyed(Vessel dyingVessel)
